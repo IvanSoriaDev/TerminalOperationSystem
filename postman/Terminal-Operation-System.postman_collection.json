@@ -1,13 +1,13 @@
 {
   "info": {
     "name": "Terminal Operation System",
-    "description": "End-to-end collection for the Terminal Operation System microservices. If you are using the public Render deployment, run the Render Free Warm Up folder first because the services can sleep after inactivity.",
+    "description": "Collection for testing the Terminal Operation System services. When using the public Render deployment, run the warm-up folder first so the services have time to wake up.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Render Free Warm Up",
-      "description": "Run this folder first against the public Render deployment. These requests wake up the free-tier services before opening Swagger or calling protected endpoints through the API Gateway.",
+      "description": "Run these requests first when using the public Render deployment. They wake up the free Render services before you open Swagger or call protected endpoints through the API Gateway.",
       "item": [
         {
           "name": "1 - Auth Service Health",

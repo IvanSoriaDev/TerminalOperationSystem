@@ -150,7 +150,7 @@ Container Service Health:    https://tos-container-operations-service.onrender.c
 Yard Service Health:         https://tos-yard-move-planning-service.onrender.com/health
 ```
 
-Important note for evaluators and Postman users:
+About the public Render deployment:
 
 ```text
 The public services run on Render Free.
@@ -159,7 +159,7 @@ Before opening Swagger or calling a protected endpoint through the API Gateway,
 first call the health endpoints to wake up the downstream services.
 ```
 
-Recommended public execution order:
+How to test the public deployment:
 
 1. Import the collection and environment.
 2. Confirm `gateway_url` is `https://tos-api-gateway.onrender.com`.
@@ -265,7 +265,7 @@ API Gateway URL:           https://<gateway-url>
 
 For public gateway deployment, configure Ocelot with environment variables so it routes to the deployed services instead of Docker Compose hostnames. The gateway supports environment overrides because `Program.cs` loads environment variables after `ocelot.json`.
 
-Useful gateway override examples:
+Example gateway overrides:
 
 ```text
 Routes__0__DownstreamScheme=https
@@ -288,7 +288,7 @@ GlobalConfiguration__BaseUrl=https://<gateway-host>
 
 For Postman against the public deployment, update `gateway_url` in the Postman environment to the deployed API Gateway URL.
 
-Current public deployment:
+Current public gateway value:
 
 ```text
 gateway_url = https://tos-api-gateway.onrender.com

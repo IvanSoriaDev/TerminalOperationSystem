@@ -9,7 +9,7 @@ The platform is implemented as four independent .NET services:
 3. **Yard Move Planning Service**
 4. **API Gateway (Ocelot)**
 
-Each domain service owns its API surface, persistence model, seed data, and authorization rules. The gateway is intentionally thin: it routes requests and exposes an aggregated Swagger experience, but it does not own business logic.
+Each domain service owns its API surface, persistence model, seed data, and authorization rules. The gateway handles routing and exposes the aggregated Swagger UI. Business logic stays inside the domain services.
 
 ## 2. Domain Boundaries
 
@@ -141,7 +141,7 @@ Validation errors and not-found responses use `ProblemDetails` where appropriate
 
 ## 8. Testing Strategy
 
-Testing is intentionally focused on high-value behavior:
+The test suite covers the main behaviors of the system:
 
 - Auth integration tests for valid and invalid token requests
 - Domain unit tests for container status rules
