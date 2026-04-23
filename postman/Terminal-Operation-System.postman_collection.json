@@ -1,10 +1,88 @@
 {
   "info": {
     "name": "Terminal Operation System",
-    "description": "End-to-end collection for the Terminal Operation System microservices. Run the auth requests first, then the protected service folders.",
+    "description": "End-to-end collection for the Terminal Operation System microservices. If you are using the public Render deployment, run the Render Free Warm Up folder first because the services can sleep after inactivity.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Render Free Warm Up",
+      "description": "Run this folder first against the public Render deployment. These requests wake up the free-tier services before opening Swagger or calling protected endpoints through the API Gateway.",
+      "item": [
+        {
+          "name": "1 - Auth Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{auth_service_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2 - Container Operations Health",
+          "request": {
+            "method": "GET",
+            "url": "{{container_service_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "3 - Yard Move Planning Health",
+          "request": {
+            "method": "GET",
+            "url": "{{yard_service_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4 - API Gateway Swagger",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_swagger_url}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [

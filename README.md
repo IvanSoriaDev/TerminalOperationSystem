@@ -138,13 +138,46 @@ postman/Terminal-Operation-System.postman_collection.json
 postman/Terminal-Operation-System.postman_environment.json
 ```
 
+### Public Render Execution
+
+Public deployment URLs:
+
+```text
+API Gateway:                 https://tos-api-gateway.onrender.com
+Gateway Swagger:             https://tos-api-gateway.onrender.com/swagger/index.html
+Auth Service Health:         https://tos-auth-service.onrender.com/health
+Container Service Health:    https://tos-container-operations-service.onrender.com/health
+Yard Service Health:         https://tos-yard-move-planning-service.onrender.com/health
+```
+
+Important note for evaluators and Postman users:
+
+```text
+The public services run on Render Free.
+Render Free web services can go to sleep after inactivity.
+Before opening Swagger or calling a protected endpoint through the API Gateway,
+first call the health endpoints to wake up the downstream services.
+```
+
+Recommended public execution order:
+
+1. Import the collection and environment.
+2. Confirm `gateway_url` is `https://tos-api-gateway.onrender.com`.
+3. Run the `Render Free Warm Up` folder.
+4. Open `https://tos-api-gateway.onrender.com/swagger/index.html` if you want to use Swagger.
+5. Run `Auth / 1 - Get JWT Token - Operator`.
+6. Run `Auth / 2 - Get JWT Token - Readonly`.
+7. Run the `Container Operations` folder.
+8. Run the `Yard Move Planning` folder.
+
 Recommended execution order:
 
 1. Import the collection and environment.
-2. Run `Auth / 1 - Get JWT Token - Operator`.
-3. Run `Auth / 2 - Get JWT Token - Readonly`.
-4. Run the `Container Operations` folder.
-5. Run the `Yard Move Planning` folder.
+2. Run the `Render Free Warm Up` folder if you are using the public Render deployment.
+3. Run `Auth / 1 - Get JWT Token - Operator`.
+4. Run `Auth / 2 - Get JWT Token - Readonly`.
+5. Run the `Container Operations` folder.
+6. Run the `Yard Move Planning` folder.
 
 The collection automatically stores:
 
@@ -154,11 +187,25 @@ readonly_token
 container_id
 yard_move_id
 future_scheduled_at_utc
+gateway_url
+auth_service_url
+container_service_url
+yard_service_url
+gateway_swagger_url
 ```
 
 ## Swagger Authorization
 
 `Container Operations` and `Yard Move Planning` Swagger documents include JWT Bearer security. In Swagger UI:
+
+If you are using the public Render deployment, wake up the services first:
+
+1. `https://tos-auth-service.onrender.com/health`
+2. `https://tos-container-operations-service.onrender.com/health`
+3. `https://tos-yard-move-planning-service.onrender.com/health`
+4. Open `https://tos-api-gateway.onrender.com/swagger/index.html`
+
+Then:
 
 1. Call `Auth Service - v1` -> `POST /auth/token`.
 2. Copy the `accessToken`.
@@ -240,6 +287,12 @@ GlobalConfiguration__BaseUrl=https://<gateway-host>
 ```
 
 For Postman against the public deployment, update `gateway_url` in the Postman environment to the deployed API Gateway URL.
+
+Current public deployment:
+
+```text
+gateway_url = https://tos-api-gateway.onrender.com
+```
 
 ## Technical Decisions
 
