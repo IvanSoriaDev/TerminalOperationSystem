@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: tos-auth-service
+    env: docker
+    rootDir: src/AuthService
+    plan: free
+    dockerfilePath: ./Dockerfile
+
+  - type: web
+    name: tos-container-operations-service
+    env: docker
+    rootDir: src/ContainerOperationsService
+    plan: free
+    dockerfilePath: ./Dockerfile
+
+  - type: web
+    name: tos-yard-move-planning-service
+    env: docker
+    rootDir: src/YardMovePlanningService
+    plan: free
+    dockerfilePath: ./Dockerfile
+
+  - type: web
+    name: tos-api-gateway
+    env: docker
+    rootDir: src/ApiGateway
+    plan: free
+    dockerfilePath: ./Dockerfile

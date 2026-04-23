@@ -1,0 +1,33 @@
+version: '3.9'
+services:
+  auth-service:
+    build:
+      context: ./src/AuthService
+    container_name: auth-service
+    ports:
+      - "5001:8080"
+
+  container-operations-service:
+    build:
+      context: ./src/ContainerOperationsService
+    container_name: container-operations-service
+    ports:
+      - "5002:8080"
+
+  yard-move-planning-service:
+    build:
+      context: ./src/YardMovePlanningService
+    container_name: yard-move-planning-service
+    ports:
+      - "5003:8080"
+
+  api-gateway:
+    build:
+      context: ./src/ApiGateway
+    container_name: api-gateway
+    depends_on:
+      - auth-service
+      - container-operations-service
+      - yard-move-planning-service
+    ports:
+      - "5000:8080"
