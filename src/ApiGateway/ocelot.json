@@ -1,0 +1,78 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-service",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/auth/{everything}",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "SwaggerKey": "auth"
+    },
+    {
+      "DownstreamPathTemplate": "/api/containers/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "container-operations-service",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/containers/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PATCH" ],
+      "SwaggerKey": "containers"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "yard-move-planning-service",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/yard/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PATCH" ],
+      "SwaggerKey": "yard"
+    }
+  ],
+  "SwaggerEndPoints": [
+    {
+      "Key": "auth",
+      "Config": [
+        {
+          "Name": "Auth Service",
+          "Version": "v1",
+          "Url": "http://auth-service:8080/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "containers",
+      "Config": [
+        {
+          "Name": "Container Operations Service",
+          "Version": "v1",
+          "Url": "http://container-operations-service:8080/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "yard",
+      "Config": [
+        {
+          "Name": "Yard Move Planning Service",
+          "Version": "v1",
+          "Url": "http://yard-move-planning-service:8080/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://api-gateway:8080"
+  }
+}

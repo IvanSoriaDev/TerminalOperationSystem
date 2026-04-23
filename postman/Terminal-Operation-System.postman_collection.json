@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "Terminal Operation System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Get JWT Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{gateway_url}}/auth/token",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": \"terminal-web-client\",\n  \"clientSecret\": \"change-me-in-production\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "pm.environment.set('access_token', response.accessToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - List Containers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{gateway_url}}/containers"
+      }
+    },
+    {
+      "name": "3 - Yard Planning Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{gateway_url}}/yard/planning/status"
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore services
+        run: |
+          dotnet restore src/AuthService/AuthService.csproj
+          dotnet restore src/ContainerOperationsService/ContainerOperationsService.csproj
+          dotnet restore src/YardMovePlanningService/YardMovePlanningService.csproj
+          dotnet restore src/ApiGateway/ApiGateway.csproj
+
+      - name: Build services
+        run: |
+          dotnet build src/AuthService/AuthService.csproj --configuration Release --no-restore
+          dotnet build src/ContainerOperationsService/ContainerOperationsService.csproj --configuration Release --no-restore
+          dotnet build src/YardMovePlanningService/YardMovePlanningService.csproj --configuration Release --no-restore
+          dotnet build src/ApiGateway/ApiGateway.csproj --configuration Release --no-restore
+
+      - name: Run tests
+        run: |
+          dotnet test tests/AuthService.IntegrationTests.csproj --configuration Release
+          dotnet test tests/ContainerOperationsService.UnitTests.csproj --configuration Release
+          dotnet test tests/YardMovePlanningService.UnitTests.csproj --configuration Release
