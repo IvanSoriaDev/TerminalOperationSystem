@@ -1,4 +1,5 @@
 using YardMovePlanningService.Domain;
+using Xunit;
 
 namespace YardMovePlanningService.UnitTests;
 

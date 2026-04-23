@@ -1,4 +1,5 @@
 using ContainerOperationsService.Domain;
+using Xunit;
 
 namespace ContainerOperationsService.UnitTests;
 

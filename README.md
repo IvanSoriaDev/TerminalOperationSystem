@@ -1,12 +1,12 @@
 # Terminal Operation System - Microservices Backend (.NET)
 
-This repository contains a backend platform for a Terminal Operation System using a microservices architecture in .NET.
+Backend platform for a Terminal Operation System implemented with ASP.NET Core Web API, JWT security, SQLite persistence, Docker Compose, Swagger/OpenAPI, Postman assets, and an Ocelot API Gateway.
 
 ## Services
 
 - **Auth Service** (`src/AuthService`)
-  - Validates technical client credentials
-  - Generates JWT token
+  - Validates mock/persisted technical clients
+  - Generates JWT access tokens
   - Includes `sub`, `role`, and `scope` claims
 
 - **Container Operations Service** (`src/ContainerOperationsService`)
@@ -14,108 +14,239 @@ This repository contains a backend platform for a Terminal Operation System usin
   - Retrieves container detail by id
   - Changes operational status
   - Registers operational events
+  - Requires `containers.read` or `containers.write`
 
 - **Yard Move Planning Service** (`src/YardMovePlanningService`)
-  - Lists operational jobs
+  - Lists yard move jobs
   - Returns pending tasks
   - Assigns jobs
   - Changes priority
   - Marks jobs as completed
   - Reschedules operations
   - Retrieves planning status
+  - Requires `yard.read` or `yard.write`
 
 - **API Gateway (Ocelot)** (`src/ApiGateway`)
-  - Unified API entrypoint
-  - Routes external requests to each microservice
-
-## Architecture and Technical Decisions
-
-- Independent services with strict domain boundaries
-- Controller-based APIs for readability and maintainability
-- JWT authentication + scope-based authorization
-- SQLite per service to keep data ownership explicit
-- Health check endpoint (`/health`) in each service
-- Dockerized services + local orchestration with Docker Compose
+  - Unified entrypoint for Postman and Swagger testing
+  - Routes `/auth/*`, `/containers/*`, and `/yard/*`
+  - Aggregates downstream Swagger documents
 
 Architecture details are available in `docs/architecture.md`.
-
-## Security
-
-### JWT Claims
-- `sub`: technical client identifier
-- `role`: technical role (e.g., operator, viewer)
-- `scope`: permissions consumed by authorization policies
-
-### Scope Policies
-- `containers.read`
-- `containers.write`
-- `yard.read`
-- `yard.write`
 
 ## Local Run
 
 ### Prerequisites
-- .NET 8 SDK
-- Docker (optional, for Compose run)
 
-### Option A - Run with Docker Compose
+- Docker Desktop
+- Optional: .NET 8 SDK if running services/tests without Docker
+
+### Run with Docker Compose
+
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-Services:
-- Gateway: `http://localhost:5000`
-- Auth: `http://localhost:5001`
-- Container Operations: `http://localhost:5002`
-- Yard Move Planning: `http://localhost:5003`
+Local URLs:
 
-### Option B - Run services manually
-Run each project independently with `dotnet run`.
+```text
+API Gateway:           http://localhost:5001
+Auth Service:          http://localhost:5004
+Container Operations:  http://localhost:5002
+Yard Move Planning:    http://localhost:5003
+```
 
-## Main API Flow (Postman)
+Swagger URLs:
 
-1. Call `POST {{gateway_url}}/auth/token`
-2. Save returned `accessToken`
-3. Call protected endpoints with `Authorization: Bearer {{access_token}}`
+```text
+Gateway Swagger:       http://localhost:5001/swagger/index.html
+Auth Swagger:          http://localhost:5004/swagger/index.html
+Container Swagger:     http://localhost:5002/swagger/index.html
+Yard Swagger:          http://localhost:5003/swagger/index.html
+```
 
-### Expected Security Behavior
-- Missing token -> `401 Unauthorized`
-- Invalid token -> `401 Unauthorized`
-- Missing required scope -> `403 Forbidden`
+Stop services:
 
-## Postman Assets
-- Collection: `postman/Terminal-Operation-System.postman_collection.json`
-- Environment: `postman/Terminal-Operation-System.postman_environment.json`
+```bash
+docker compose down
+```
+
+## Demo Credentials
+
+Operator client, full access:
+
+```json
+{
+  "clientId": "terminal-web-client",
+  "clientSecret": "change-me-in-production"
+}
+```
+
+Scopes:
+
+```text
+containers.read containers.write yard.read yard.write
+```
+
+Readonly client:
+
+```json
+{
+  "clientId": "yard-readonly-client",
+  "clientSecret": "readonly-secret"
+}
+```
+
+Scopes:
+
+```text
+yard.read containers.read
+```
+
+## Main API Flow
+
+Request a token through the gateway:
+
+```bash
+curl -X POST http://localhost:5001/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"clientId":"terminal-web-client","clientSecret":"change-me-in-production"}'
+```
+
+Use the returned `accessToken`:
+
+```bash
+curl http://localhost:5001/containers \
+  -H "Authorization: Bearer <access_token>"
+```
+
+Expected security behavior:
+
+```text
+Missing token              -> 401 Unauthorized
+Invalid token              -> 401 Unauthorized
+Missing required scope     -> 403 Forbidden
+Invalid request data       -> 400 Bad Request
+Missing resource           -> 404 Not Found
+```
+
+## Postman
+
+Files:
+
+```text
+postman/Terminal-Operation-System.postman_collection.json
+postman/Terminal-Operation-System.postman_environment.json
+```
+
+Recommended execution order:
+
+1. Import the collection and environment.
+2. Run `Auth / 1 - Get JWT Token - Operator`.
+3. Run `Auth / 2 - Get JWT Token - Readonly`.
+4. Run the `Container Operations` folder.
+5. Run the `Yard Move Planning` folder.
+
+The collection automatically stores:
+
+```text
+access_token
+readonly_token
+container_id
+yard_move_id
+future_scheduled_at_utc
+```
+
+## Swagger Authorization
+
+`Container Operations` and `Yard Move Planning` Swagger documents include JWT Bearer security. In Swagger UI:
+
+1. Call `Auth Service - v1` -> `POST /auth/token`.
+2. Copy the `accessToken`.
+3. Switch to `Container Operations Service - v1` or `Yard Move Planning Service - v1`.
+4. Click `Authorize`.
+5. Paste only the token value. Swagger adds the `Bearer` scheme.
 
 ## Testing
 
-Projects:
-- `tests/AuthService.IntegrationTests.csproj`
-- `tests/ContainerOperationsService.UnitTests.csproj`
-- `tests/YardMovePlanningService.UnitTests.csproj`
+Run all tests:
 
-Run:
+```bash
+dotnet test TerminalOperationSystem.sln
+```
+
+Or run them individually:
+
 ```bash
 dotnet test tests/AuthService.IntegrationTests.csproj
 dotnet test tests/ContainerOperationsService.UnitTests.csproj
 dotnet test tests/YardMovePlanningService.UnitTests.csproj
 ```
 
+Test coverage includes:
+
+- Auth integration flow for valid and invalid credentials
+- Domain unit tests for container statuses
+- Domain unit tests for yard priority/completion rules
+- Protected endpoint tests for `401`, `403`, and valid scoped access
+
 ## CI
 
-GitHub Actions workflow: `.github/workflows/build-and-test.yml`
+GitHub Actions workflow:
+
+```text
+.github/workflows/build-and-test.yml
+```
 
 Pipeline stages:
-1. Restore
-2. Build
-3. Test
 
-## Render Deployment
+```text
+restore -> build -> test
+```
 
-The repository includes `render.yaml` as deployment blueprint.
+## Deployment
 
-After deployment, replace with real URLs:
-- Auth Service URL: `https://<auth-service-url>`
-- Container Operations Service URL: `https://<container-service-url>`
-- Yard Move Planning Service URL: `https://<yard-service-url>`
-- API Gateway URL: `https://<gateway-url>`
+The repository includes `render.yaml` as a Render blueprint starter. The services can also be deployed to Railway, Azure App Service, or another container-compatible platform.
+
+After public deployment, share these URLs:
+
+```text
+Auth Service URL:          https://<auth-service-url>
+Container Service URL:     https://<container-service-url>
+Yard Service URL:          https://<yard-service-url>
+API Gateway URL:           https://<gateway-url>
+```
+
+For public gateway deployment, configure Ocelot with environment variables so it routes to the deployed services instead of Docker Compose hostnames. The gateway supports environment overrides because `Program.cs` loads environment variables after `ocelot.json`.
+
+Useful gateway override examples:
+
+```text
+Routes__0__DownstreamScheme=https
+Routes__0__DownstreamHostAndPorts__0__Host=<auth-service-host>
+Routes__0__DownstreamHostAndPorts__0__Port=443
+SwaggerEndPoints__0__Config__0__Url=https://<auth-service-host>/swagger/v1/swagger.json
+
+Routes__1__DownstreamScheme=https
+Routes__1__DownstreamHostAndPorts__0__Host=<container-service-host>
+Routes__1__DownstreamHostAndPorts__0__Port=443
+SwaggerEndPoints__1__Config__0__Url=https://<container-service-host>/swagger/v1/swagger.json
+
+Routes__2__DownstreamScheme=https
+Routes__2__DownstreamHostAndPorts__0__Host=<yard-service-host>
+Routes__2__DownstreamHostAndPorts__0__Port=443
+SwaggerEndPoints__2__Config__0__Url=https://<yard-service-host>/swagger/v1/swagger.json
+
+GlobalConfiguration__BaseUrl=https://<gateway-host>
+```
+
+For Postman against the public deployment, update `gateway_url` in the Postman environment to the deployed API Gateway URL.
+
+## Technical Decisions
+
+- Separate ASP.NET Core projects per domain boundary
+- SQLite database per service to avoid shared persistence
+- Controller-based APIs for clear contracts and status codes
+- JWT Bearer authentication with scope-based authorization policies
+- Ocelot Gateway for a unified consumer entrypoint
+- Swagger/OpenAPI for local and gateway-level API exploration
+- Docker Compose for reproducible local orchestration
