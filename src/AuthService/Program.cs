@@ -34,6 +34,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
@@ -41,32 +43,42 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-
-    if (!await dbContext.TechnicalClients.AnyAsync())
+    try
     {
-        dbContext.TechnicalClients.AddRange(
-            new TechnicalClient
-            {
-                Id = Guid.NewGuid(),
-                ClientId = "terminal-web-client",
-                ClientSecret = "change-me-in-production",
-                Role = "operator",
-                AllowedScopes = "containers.read containers.write yard.read yard.write"
-            },
-            new TechnicalClient
-            {
-                Id = Guid.NewGuid(),
-                ClientId = "yard-readonly-client",
-                ClientSecret = "readonly-secret",
-                Role = "viewer",
-                AllowedScopes = "yard.read containers.read"
-            });
+        var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        await dbContext.Database.EnsureCreatedAsync();
 
-        await dbContext.SaveChangesAsync();
+        if (!await dbContext.TechnicalClients.AnyAsync())
+        {
+            dbContext.TechnicalClients.AddRange(
+                new TechnicalClient
+                {
+                    Id = Guid.NewGuid(),
+                    ClientId = "terminal-web-client",
+                    ClientSecret = "change-me-in-production",
+                    Role = "operator",
+                    AllowedScopes = "containers.read containers.write yard.read yard.write"
+                },
+                new TechnicalClient
+                {
+                    Id = Guid.NewGuid(),
+                    ClientId = "yard-readonly-client",
+                    ClientSecret = "readonly-secret",
+                    Role = "viewer",
+                    AllowedScopes = "yard.read containers.read"
+                });
+
+            await dbContext.SaveChangesAsync();
+        }
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogCritical(exception, "An error occurred while initializing Auth Service data.");
+        throw;
     }
 }
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

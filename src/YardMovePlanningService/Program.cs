@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using YardMovePlanningService.Authorization;
 using YardMovePlanningService.Data;
 using YardMovePlanningService.Domain;
+using YardMovePlanningService.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
@@ -69,19 +72,29 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<YardDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-
-    if (!await dbContext.YardMoveJobs.AnyAsync())
+    try
     {
-        dbContext.YardMoveJobs.AddRange(
-            new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-001", ContainerNumber = "MSCU1234567", FromLocation = "A1", ToLocation = "B3", Priority = 1, ScheduledAtUtc = DateTime.UtcNow.AddHours(1) },
-            new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-002", ContainerNumber = "TGHU7654321", FromLocation = "C2", ToLocation = "D5", Priority = 2, ScheduledAtUtc = DateTime.UtcNow.AddHours(2) },
-            new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-003", ContainerNumber = "CMAU9990001", FromLocation = "E1", ToLocation = "F4", Priority = 3, ScheduledAtUtc = DateTime.UtcNow.AddHours(3) });
+        var dbContext = scope.ServiceProvider.GetRequiredService<YardDbContext>();
+        await dbContext.Database.EnsureCreatedAsync();
 
-        await dbContext.SaveChangesAsync();
+        if (!await dbContext.YardMoveJobs.AnyAsync())
+        {
+            dbContext.YardMoveJobs.AddRange(
+                new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-001", ContainerNumber = "MSCU1234567", FromLocation = "A1", ToLocation = "B3", Priority = 1, ScheduledAtUtc = DateTime.UtcNow.AddHours(1) },
+                new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-002", ContainerNumber = "TGHU7654321", FromLocation = "C2", ToLocation = "D5", Priority = 2, ScheduledAtUtc = DateTime.UtcNow.AddHours(2) },
+                new YardMoveJob { Id = Guid.NewGuid(), JobCode = "YARD-003", ContainerNumber = "CMAU9990001", FromLocation = "E1", ToLocation = "F4", Priority = 3, ScheduledAtUtc = DateTime.UtcNow.AddHours(3) });
+
+            await dbContext.SaveChangesAsync();
+        }
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogCritical(exception, "An error occurred while initializing Yard Move Planning Service data.");
+        throw;
     }
 }
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

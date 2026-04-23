@@ -2,6 +2,7 @@ using System.Text;
 using ContainerOperationsService.Authorization;
 using ContainerOperationsService.Data;
 using ContainerOperationsService.Domain;
+using ContainerOperationsService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +37,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
@@ -69,19 +72,29 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ContainerDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-
-    if (!await dbContext.Containers.AnyAsync())
+    try
     {
-        dbContext.Containers.AddRange(
-            new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "MSCU1234567", Status = "inbound", LastUpdatedUtc = DateTime.UtcNow },
-            new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "TGHU7654321", Status = "hold", LastUpdatedUtc = DateTime.UtcNow },
-            new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "CMAU9990001", Status = "loaded", LastUpdatedUtc = DateTime.UtcNow });
+        var dbContext = scope.ServiceProvider.GetRequiredService<ContainerDbContext>();
+        await dbContext.Database.EnsureCreatedAsync();
 
-        await dbContext.SaveChangesAsync();
+        if (!await dbContext.Containers.AnyAsync())
+        {
+            dbContext.Containers.AddRange(
+                new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "MSCU1234567", Status = "inbound", LastUpdatedUtc = DateTime.UtcNow },
+                new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "TGHU7654321", Status = "hold", LastUpdatedUtc = DateTime.UtcNow },
+                new ContainerUnit { Id = Guid.NewGuid(), ContainerNumber = "CMAU9990001", Status = "loaded", LastUpdatedUtc = DateTime.UtcNow });
+
+            await dbContext.SaveChangesAsync();
+        }
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogCritical(exception, "An error occurred while initializing Container Operations Service data.");
+        throw;
     }
 }
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
