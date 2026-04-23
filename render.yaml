@@ -1,28 +1,78 @@
 services:
   - type: web
     name: tos-auth-service
-    env: docker
-    rootDir: src/AuthService
+    runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./src/AuthService/Dockerfile
+    dockerContext: ./src/AuthService
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
 
   - type: web
     name: tos-container-operations-service
-    env: docker
-    rootDir: src/ContainerOperationsService
+    runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./src/ContainerOperationsService/Dockerfile
+    dockerContext: ./src/ContainerOperationsService
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
 
   - type: web
     name: tos-yard-move-planning-service
-    env: docker
-    rootDir: src/YardMovePlanningService
+    runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./src/YardMovePlanningService/Dockerfile
+    dockerContext: ./src/YardMovePlanningService
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
 
   - type: web
     name: tos-api-gateway
-    env: docker
-    rootDir: src/ApiGateway
+    runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./src/ApiGateway/Dockerfile
+    dockerContext: ./src/ApiGateway
+    healthCheckPath: /swagger/index.html
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - key: Routes__0__DownstreamScheme
+        value: https
+      - key: Routes__0__DownstreamHostAndPorts__0__Host
+        value: tos-auth-service.onrender.com
+      - key: Routes__0__DownstreamHostAndPorts__0__Port
+        value: 443
+      - key: Routes__1__DownstreamScheme
+        value: https
+      - key: Routes__1__DownstreamHostAndPorts__0__Host
+        value: tos-container-operations-service.onrender.com
+      - key: Routes__1__DownstreamHostAndPorts__0__Port
+        value: 443
+      - key: Routes__2__DownstreamScheme
+        value: https
+      - key: Routes__2__DownstreamHostAndPorts__0__Host
+        value: tos-yard-move-planning-service.onrender.com
+      - key: Routes__2__DownstreamHostAndPorts__0__Port
+        value: 443
+      - key: SwaggerEndPoints__0__Config__0__Url
+        value: https://tos-auth-service.onrender.com/swagger/v1/swagger.json
+      - key: SwaggerEndPoints__1__Config__0__Url
+        value: https://tos-container-operations-service.onrender.com/swagger/v1/swagger.json
+      - key: SwaggerEndPoints__2__Config__0__Url
+        value: https://tos-yard-move-planning-service.onrender.com/swagger/v1/swagger.json
+      - key: GlobalConfiguration__BaseUrl
+        value: https://tos-api-gateway.onrender.com
